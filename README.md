@@ -16,5 +16,3 @@ https://www.bilibili.com/video/BV1V54y1B7K3
 Course website:  
 https://cv-xueba.club/
 
-
-#### Directory Instructions
