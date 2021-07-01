@@ -4,4 +4,4 @@ Homework1
 
 实现方法：
 老师已提供程序框架，完成了load图片等操作
-我们只需要填充my_canny.py和my_hough.py内关键的部分
+我们只需要填充my_canny.py和my_hough.py内关键的部分,关键部分已通过注释标出

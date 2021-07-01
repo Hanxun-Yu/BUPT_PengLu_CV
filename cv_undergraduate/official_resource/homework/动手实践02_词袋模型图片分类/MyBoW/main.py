@@ -1,4 +1,3 @@
-import cv2
 import DataProcess
 import os
 import numpy as np
