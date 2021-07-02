@@ -18,6 +18,7 @@ class Canny:
         self.img = img
         self.y, self.x = img.shape[0:2]
         self.angle = np.zeros([self.y, self.x])
+        self.tan = None
         self.img_origin = None
         self.x_kernal = np.array([[-1, 1]])
         self.y_kernal = np.array([[-1], [1]])
@@ -74,15 +75,19 @@ class Canny:
         # 取模
         # gradient_magnitude = np.sqrt(np.power(gradient_horizontal_arr, 2) + np.power(gradient_vertical_arr, 2))
         
-        # 取模，算arctan(偏y/偏x) 
+        # 取模，算arctan(偏y/偏x) ，这里用cv的笛卡尔转极坐标
         gradient_magnitude, self.angle = cv2.cartToPolar(gradient_horizontal_arr, gradient_vertical_arr)
 
         # self._show_img(gradient_magnitude.astype(np.uint8))
 
-        self.angle = np.tan(self.angle)
-        self.img = gradient_magnitude.astype(np.uint8)
-        # self._show_img(self.img)
 
+        # 这里好坑，复制官方的过来没注意，导致后面理解不了为什么angle>1来判断，把1理解成了弧度，这里其实又转成了tan
+        # self.angle = np.tan(self.angle)
+        
+        # 我把变量名改成了tan
+        self.tan = np.tan(self.angle)
+        self.img = gradient_magnitude.astype(np.uint8)
+        
         # ------------- write your code above ----------------        
         return self.img
 
@@ -94,30 +99,34 @@ class Canny:
         print('Non_maximum_suppression')
         
         """
-        非极大值抑制， 就是把粗边变细边，如果这边很粗，两侧往中间从浅到深，我们取中间最深的点
+        非极大值抑制， 就是把粗边变细边，如果这边很粗，从两侧往中间从浅到深，我们取中间最深的点
         """
         # ------------- write your code below ----------------
         result = np.zeros([self.y, self.x])
+        
+        # i = row
+        # j = col
         for i in range(1, self.y - 1):
             for j in range(1, self.x - 1):
                 if abs(self.img[i][j]) <= 4:
                     # 灰度小于4的，直接清0
                     result[i][j] = 0
                     continue
-                elif abs(self.angle[i][j]) > 1:
+                
+                if abs(self.tan[i][j]) > 1:
                     
                     gradient2 = self.img[i - 1][j]
                     gradient4 = self.img[i + 1][j]
                     # g1 g2
                     #    C
                     #    g4 g3
-                    if self.angle[i][j] > 0:
+                    if self.tan[i][j] > 0:
                         gradient1 = self.img[i - 1][j - 1]
                         gradient3 = self.img[i + 1][j + 1]
                     
-                    #    g2 g1
+                    #    g2 g3
                     #    C
-                    # g3 g4
+                    # g1 g4
                     else:
                         gradient1 = self.img[i - 1][j + 1]
                         gradient3 = self.img[i + 1][j - 1]
@@ -127,24 +136,25 @@ class Canny:
                     # g1
                     # g2 C g4
                     #      g3
-                    if self.angle[i][j] > 0:
+                    if self.tan[i][j] > 0:
                         gradient1 = self.img[i - 1][j - 1]
                         gradient3 = self.img[i + 1][j + 1]
-                    #      g3
+                    #      g1
                     # g2 C g4
-                    # g1
+                    # g3
                     else:
                         gradient3 = self.img[i - 1][j + 1]
                         gradient1 = self.img[i + 1][j - 1]
-
-                temp1 = abs(self.angle[i][j]) * gradient1 + (1 - abs(self.angle[i][j])) * gradient2
-                temp2 = abs(self.angle[i][j]) * gradient3 + (1 - abs(self.angle[i][j])) * gradient4
+ 
+                temp1 = abs(self.tan[i][j]) * gradient1 + (1 - abs(self.tan[i][j])) * gradient2
+                temp2 = abs(self.tan[i][j]) * gradient3 + (1 - abs(self.tan[i][j])) * gradient4
                 if self.img[i][j] >= temp1 and self.img[i][j] >= temp2:
                     result[i][j] = self.img[i][j]
                 else:
                     result[i][j] = 0
         self.img = result
-        self._show_img(self.img)
+        self._show_img(result)   
+        exit(0)
         # ------------- write your code above ----------------        
         return self.img
 
