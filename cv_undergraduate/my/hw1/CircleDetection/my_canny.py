@@ -131,6 +131,10 @@ class Canny:
                         gradient1 = self.img[i - 1][j + 1]
                         gradient3 = self.img[i + 1][j - 1]
 
+                    # 这里改成倒数
+                    temp1 = abs(1 / self.tan[i][j]) * gradient2 + (1 - 1 / abs(self.tan[i][j])) * gradient1
+                    temp2 = abs(1 / self.tan[i][j]) * gradient4 + (1 - 1 / abs(self.tan[i][j])) * gradient3
+
                 else:
                     gradient2 = self.img[i][j - 1]
                     gradient4 = self.img[i][j + 1]
@@ -147,21 +151,23 @@ class Canny:
                         gradient3 = self.img[i - 1][j + 1]
                         gradient1 = self.img[i + 1][j - 1]
 
+                    temp1 = abs(self.tan[i][j]) * gradient4 + (1 - abs(self.tan[i][j])) * gradient3
+                    temp2 = abs(self.tan[i][j]) * gradient2 + (1 - abs(self.tan[i][j])) * gradient1
+
                 # 这个官方代码，个人认为不对，应该是tan的倒数，我笔记中有详细说明
                 # 从上面的ifelse的代码，可以看到，abs(self.tan[i][j])存在大于1的情况，那下面(1 - abs(self.tan[i][j]))，那明显就不对了
+                # 应该像上面那样，讨论>1 <1的情况
                 # temp1 = abs(self.tan[i][j]) * gradient1 + (1 - abs(self.tan[i][j])) * gradient2
                 # temp2 = abs(self.tan[i][j]) * gradient3 + (1 - abs(self.tan[i][j])) * gradient4
 
-                # 这里改成倒数
-                temp1 = abs(1 / self.tan[i][j]) * gradient2 + (1 - 1 / abs(self.tan[i][j])) * gradient1
-                temp2 = abs(1 / self.tan[i][j]) * gradient4 + (1 - 1 / abs(self.tan[i][j])) * gradient3
+                
                 if self.img[i][j] >= temp1 and self.img[i][j] >= temp2:
                     result[i][j] = self.img[i][j]
                 else:
                     result[i][j] = 0
         self.img = result
-        # self._show_img(result)   
-        # exit(0)
+        self._show_img(result)   
+        exit(0)
         # ------------- write your code above ----------------        
         return self.img
 
