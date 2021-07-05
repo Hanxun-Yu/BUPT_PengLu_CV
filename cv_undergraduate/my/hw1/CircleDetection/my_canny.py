@@ -25,8 +25,6 @@ class Canny:
         self.HT_high_threshold = HT_high_threshold
         self.HT_low_threshold = HT_low_threshold
 
-
-    
     def Get_gradient_img(self):
         '''
         计算梯度图和梯度方向矩阵。
@@ -74,20 +72,19 @@ class Canny:
 
         # 取模
         # gradient_magnitude = np.sqrt(np.power(gradient_horizontal_arr, 2) + np.power(gradient_vertical_arr, 2))
-        
+
         # 取模，算arctan(偏y/偏x) ，这里用cv的笛卡尔转极坐标
         gradient_magnitude, self.angle = cv2.cartToPolar(gradient_horizontal_arr, gradient_vertical_arr)
 
         # self._show_img(gradient_magnitude.astype(np.uint8))
 
-
         # 这里好坑，复制官方的过来没注意，导致后面理解不了为什么angle>1来判断，把1理解成了弧度，这里其实又转成了tan
         # self.angle = np.tan(self.angle)
-        
+
         # 我把变量名改成了tan
         self.tan = np.tan(self.angle)
         self.img = gradient_magnitude.astype(np.uint8)
-        
+
         # ------------- write your code above ----------------        
         return self.img
 
@@ -97,13 +94,13 @@ class Canny:
         :return: 生成的非极大化抑制结果图
         '''
         print('Non_maximum_suppression')
-        
+
         """
         非极大值抑制， 就是把粗边变细边，如果这边很粗，从两侧往中间从浅到深，我们取中间最深的点
         """
         # ------------- write your code below ----------------
         result = np.zeros([self.y, self.x])
-        
+
         # i = row
         # j = col
         for i in range(1, self.y - 1):
@@ -112,49 +109,59 @@ class Canny:
                     # 灰度小于4的，直接清0
                     result[i][j] = 0
                     continue
-                
+
                 if abs(self.tan[i][j]) > 1:
-                    
+
                     gradient2 = self.img[i - 1][j]
                     gradient4 = self.img[i + 1][j]
+
+                    # 这里官方参考代码也不对吧， 这种排布是tan<0的情况，我这里改了
                     # g1 g2
                     #    C
                     #    g4 g3
-                    if self.tan[i][j] > 0:
+                    if self.tan[i][j] < 0:
                         gradient1 = self.img[i - 1][j - 1]
                         gradient3 = self.img[i + 1][j + 1]
-                    
-                    #    g2 g3
+
+
+                    #    g2 g1
                     #    C
-                    # g1 g4
+                    # g3 g4
                     else:
                         gradient1 = self.img[i - 1][j + 1]
                         gradient3 = self.img[i + 1][j - 1]
+
                 else:
                     gradient2 = self.img[i][j - 1]
                     gradient4 = self.img[i][j + 1]
                     # g1
                     # g2 C g4
                     #      g3
-                    if self.tan[i][j] > 0:
+                    if self.tan[i][j] < 0:
                         gradient1 = self.img[i - 1][j - 1]
                         gradient3 = self.img[i + 1][j + 1]
-                    #      g1
+                    #      g3
                     # g2 C g4
-                    # g3
+                    # g1
                     else:
                         gradient3 = self.img[i - 1][j + 1]
                         gradient1 = self.img[i + 1][j - 1]
- 
-                temp1 = abs(self.tan[i][j]) * gradient1 + (1 - abs(self.tan[i][j])) * gradient2
-                temp2 = abs(self.tan[i][j]) * gradient3 + (1 - abs(self.tan[i][j])) * gradient4
+
+                # 这个官方代码，个人认为不对，应该是tan的倒数，我笔记中有详细说明
+                # 从上面的ifelse的代码，可以看到，abs(self.tan[i][j])存在大于1的情况，那下面(1 - abs(self.tan[i][j]))，那明显就不对了
+                # temp1 = abs(self.tan[i][j]) * gradient1 + (1 - abs(self.tan[i][j])) * gradient2
+                # temp2 = abs(self.tan[i][j]) * gradient3 + (1 - abs(self.tan[i][j])) * gradient4
+
+                # 这里改成倒数
+                temp1 = abs(1 / self.tan[i][j]) * gradient2 + (1 - 1 / abs(self.tan[i][j])) * gradient1
+                temp2 = abs(1 / self.tan[i][j]) * gradient4 + (1 - 1 / abs(self.tan[i][j])) * gradient3
                 if self.img[i][j] >= temp1 and self.img[i][j] >= temp2:
                     result[i][j] = self.img[i][j]
                 else:
                     result[i][j] = 0
         self.img = result
-        self._show_img(result)   
-        exit(0)
+        # self._show_img(result)   
+        # exit(0)
         # ------------- write your code above ----------------        
         return self.img
 
@@ -166,8 +173,54 @@ class Canny:
         '''
         print('Hysteresis_thresholding')
         # ------------- write your code bellow ----------------
-
+        for i in range(1, self.y - 1):
+            for j in range(1, self.x - 1):
+                if self.img[i][j] >= self.HT_high_threshold:
+                    if abs(self.tan[i][j]) < 1:
+                        if self.img_origin[i - 1][j] > self.HT_low_threshold:
+                            self.img[i - 1][j] = self.HT_high_threshold
+                        if self.img_origin[i + 1][j] > self.HT_low_threshold:
+                            self.img[i + 1][j] = self.HT_high_threshold
+                        # g1 g2
+                        #    C
+                        #    g4 g3
+                        if self.tan[i][j] < 0:
+                            if self.img_origin[i - 1][j - 1] > self.HT_low_threshold:
+                                self.img[i - 1][j - 1] = self.HT_high_threshold
+                            if self.img_origin[i + 1][j + 1] > self.HT_low_threshold:
+                                self.img[i + 1][j + 1] = self.HT_high_threshold
+                        #    g2 g1
+                        #    C
+                        # g3 g4
+                        else:
+                            if self.img_origin[i - 1][j + 1] > self.HT_low_threshold:
+                                self.img[i - 1][j + 1] = self.HT_high_threshold
+                            if self.img_origin[i + 1][j - 1] > self.HT_low_threshold:
+                                self.img[i + 1][j - 1] = self.HT_high_threshold
+                    else:
+                        if self.img_origin[i][j - 1] > self.HT_low_threshold:
+                            self.img[i][j - 1] = self.HT_high_threshold
+                        if self.img_origin[i][j + 1] > self.HT_low_threshold:
+                            self.img[i][j + 1] = self.HT_high_threshold
+                        # g1
+                        # g2 C g4
+                        #      g3
+                        if self.tan[i][j] < 0:
+                            if self.img_origin[i - 1][j - 1] > self.HT_low_threshold:
+                                self.img[i - 1][j - 1] = self.HT_high_threshold
+                            if self.img_origin[i + 1][j + 1] > self.HT_low_threshold:
+                                self.img[i + 1][j + 1] = self.HT_high_threshold
+                        #      g3
+                        # g2 C g4
+                        # g1
+                        else:
+                            if self.img_origin[i - 1][j + 1] > self.HT_low_threshold:
+                                self.img[i + 1][j - 1] = self.HT_high_threshold
+                            if self.img_origin[i + 1][j - 1] > self.HT_low_threshold:
+                                self.img[i + 1][j - 1] = self.HT_high_threshold
         # ------------- write your code above ----------------        
+        self._show_img(self.img)
+        exit(0)
         return self.img
 
     def canny_algorithm(self):
@@ -176,14 +229,14 @@ class Canny:
         :return: Canny 算法的结果
         '''
 
-        # 备份一下
-        self.img_origin = self.img.copy()
         # 先去一次噪
         self.img = cv2.GaussianBlur(self.img, (self.Guassian_kernal_size, self.Guassian_kernal_size), 0)
         # self._show_img(img)
 
         # 返回梯度强度图
         self.Get_gradient_img()
+        # 备份一下梯度强度结果
+        self.img_origin = self.img.copy()
         self.Non_maximum_suppression()
         self.Hysteresis_thresholding()
         return self.img
