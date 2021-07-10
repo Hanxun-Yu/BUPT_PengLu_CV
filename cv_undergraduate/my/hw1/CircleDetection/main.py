@@ -1,3 +1,5 @@
+import os
+
 import cv2
 import math
 from my_hough import Hough_transform
@@ -12,6 +14,12 @@ HT_high_threshold = 45
 HT_low_threshold = 25
 Hough_transform_step = 6
 Hough_transform_threshold = 110
+
+# 创建文件夹
+folder = os.path.exists(Save_Path)
+if not folder:  # 判断是否存在文件夹如果不存在则创建为文件夹
+    os.makedirs(Save_Path)
+
 
 
 def show_img(img):

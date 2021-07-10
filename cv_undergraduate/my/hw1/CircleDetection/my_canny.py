@@ -19,7 +19,7 @@ class Canny:
         self.y, self.x = img.shape[0:2]
         self.angle = np.zeros([self.y, self.x])
         self.tan = None
-        self.img_origin = None
+        self.img_gradient = None
         self.x_kernal = np.array([[-1, 1]])
         self.y_kernal = np.array([[-1], [1]])
         self.HT_high_threshold = HT_high_threshold
@@ -160,14 +160,13 @@ class Canny:
                 # temp1 = abs(self.tan[i][j]) * gradient1 + (1 - abs(self.tan[i][j])) * gradient2
                 # temp2 = abs(self.tan[i][j]) * gradient3 + (1 - abs(self.tan[i][j])) * gradient4
 
-                
                 if self.img[i][j] >= temp1 and self.img[i][j] >= temp2:
                     result[i][j] = self.img[i][j]
                 else:
                     result[i][j] = 0
         self.img = result
-        self._show_img(result)   
-        exit(0)
+        # self._show_img(result)   
+        # exit(0)
         # ------------- write your code above ----------------        
         return self.img
 
@@ -181,52 +180,64 @@ class Canny:
         # ------------- write your code bellow ----------------
         for i in range(1, self.y - 1):
             for j in range(1, self.x - 1):
+                # 这里img是NMS后的结果
+                # 遍历每个点，若大于高阈值，则进行处理，否则不需要
                 if self.img[i][j] >= self.HT_high_threshold:
+                    # 因为NMS会抑制掉一些细边，我们要把他们找回来
+                    # 遍历每个被NMS后的点，若这个点大于高阈值，就看他周围的点（看周围的被NMS抑制前的强度图上的点）
+                    # 若周围点大于低阈值，则把他恢复回去，值就填高阈值
+
                     if abs(self.tan[i][j]) < 1:
-                        if self.img_origin[i - 1][j] > self.HT_low_threshold:
+                        # 处理 g2 和 g4
+                        if self.img_gradient[i - 1][j] > self.HT_low_threshold:
                             self.img[i - 1][j] = self.HT_high_threshold
-                        if self.img_origin[i + 1][j] > self.HT_low_threshold:
+                        if self.img_gradient[i + 1][j] > self.HT_low_threshold:
                             self.img[i + 1][j] = self.HT_high_threshold
                         # g1 g2
                         #    C
                         #    g4 g3
                         if self.tan[i][j] < 0:
-                            if self.img_origin[i - 1][j - 1] > self.HT_low_threshold:
+                            # 处理g1
+                            if self.img_gradient[i - 1][j - 1] > self.HT_low_threshold:
                                 self.img[i - 1][j - 1] = self.HT_high_threshold
-                            if self.img_origin[i + 1][j + 1] > self.HT_low_threshold:
+
+                            # 处理g3
+                            if self.img_gradient[i + 1][j + 1] > self.HT_low_threshold:
                                 self.img[i + 1][j + 1] = self.HT_high_threshold
                         #    g2 g1
                         #    C
                         # g3 g4
                         else:
-                            if self.img_origin[i - 1][j + 1] > self.HT_low_threshold:
+                            # 处理g1
+                            if self.img_gradient[i - 1][j + 1] > self.HT_low_threshold:
                                 self.img[i - 1][j + 1] = self.HT_high_threshold
-                            if self.img_origin[i + 1][j - 1] > self.HT_low_threshold:
+                            # 处理g3
+                            if self.img_gradient[i + 1][j - 1] > self.HT_low_threshold:
                                 self.img[i + 1][j - 1] = self.HT_high_threshold
                     else:
-                        if self.img_origin[i][j - 1] > self.HT_low_threshold:
+                        if self.img_gradient[i][j - 1] > self.HT_low_threshold:
                             self.img[i][j - 1] = self.HT_high_threshold
-                        if self.img_origin[i][j + 1] > self.HT_low_threshold:
+                        if self.img_gradient[i][j + 1] > self.HT_low_threshold:
                             self.img[i][j + 1] = self.HT_high_threshold
                         # g1
                         # g2 C g4
                         #      g3
                         if self.tan[i][j] < 0:
-                            if self.img_origin[i - 1][j - 1] > self.HT_low_threshold:
+                            if self.img_gradient[i - 1][j - 1] > self.HT_low_threshold:
                                 self.img[i - 1][j - 1] = self.HT_high_threshold
-                            if self.img_origin[i + 1][j + 1] > self.HT_low_threshold:
+                            if self.img_gradient[i + 1][j + 1] > self.HT_low_threshold:
                                 self.img[i + 1][j + 1] = self.HT_high_threshold
                         #      g3
                         # g2 C g4
                         # g1
                         else:
-                            if self.img_origin[i - 1][j + 1] > self.HT_low_threshold:
+                            if self.img_gradient[i - 1][j + 1] > self.HT_low_threshold:
                                 self.img[i + 1][j - 1] = self.HT_high_threshold
-                            if self.img_origin[i + 1][j - 1] > self.HT_low_threshold:
+                            if self.img_gradient[i + 1][j - 1] > self.HT_low_threshold:
                                 self.img[i + 1][j - 1] = self.HT_high_threshold
         # ------------- write your code above ----------------        
-        self._show_img(self.img)
-        exit(0)
+        # self._show_img(self.img)
+        # exit(0)
         return self.img
 
     def canny_algorithm(self):
@@ -242,7 +253,7 @@ class Canny:
         # 返回梯度强度图
         self.Get_gradient_img()
         # 备份一下梯度强度结果
-        self.img_origin = self.img.copy()
+        self.img_gradient = self.img.copy()
         self.Non_maximum_suppression()
         self.Hysteresis_thresholding()
         return self.img

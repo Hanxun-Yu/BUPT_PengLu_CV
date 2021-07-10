@@ -19,6 +19,8 @@ class Hough_transform:
         self.y, self.x = img.shape[0:2]
         self.radius = math.ceil(math.sqrt(self.y**2 + self.x**2))
         self.step = step
+        
+        # 投票存放的矩阵
         self.vote_matrix = np.zeros([math.ceil(self.y / self.step), math.ceil(self.x / self.step), math.ceil(self.radius / self.step)])
         self.threshold = threshold
         self.circles = []
@@ -31,7 +33,13 @@ class Hough_transform:
         '''
         print ('Hough_transform_algorithm')
         # ------------- write your code bellow ----------------
-
+        
+        img = self.img
+        
+        for row in range(1,self.y-1):
+            for col in range(1, self.x -1):
+                if img[row][col] > 0:
+                    
 
 
         # ------------- write your code above ----------------
