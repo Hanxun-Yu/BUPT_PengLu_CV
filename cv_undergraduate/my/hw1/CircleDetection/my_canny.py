@@ -84,7 +84,8 @@ class Canny:
         # 我把变量名改成了tan
         self.tan = np.tan(self.angle)
         self.img = gradient_magnitude.astype(np.uint8)
-
+        # self._show_img(self.img)   
+        # exit(0)
         # ------------- write your code above ----------------        
         return self.img
 

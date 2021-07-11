@@ -13,7 +13,7 @@ Guassian_kernal_size = 3
 HT_high_threshold = 45
 HT_low_threshold = 25
 Hough_transform_step = 6
-Hough_transform_threshold = 110
+Hough_transform_threshold = 95
 
 # 创建文件夹
 folder = os.path.exists(Save_Path)
@@ -68,6 +68,6 @@ if __name__ == '__main__':
     Hough = Hough_transform(canny.img, canny.tan, Hough_transform_step, Hough_transform_threshold)
     circles = Hough.Calculate()
     for circle in circles:
-        cv2.circle(img_RGB, (math.ceil(circle[0]), math.ceil(circle[1])), math.ceil(circle[2]), (132, 135, 239), 2)
+        cv2.circle(img_RGB, (math.ceil(circle[0]), math.ceil(circle[1])), math.ceil(circle[2]), (132, 135, 239), 4)
     cv2.imwrite(Save_Path + "hough_result.jpg", img_RGB)
     print('Finished!')
